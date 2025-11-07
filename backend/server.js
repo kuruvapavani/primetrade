@@ -3,20 +3,24 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import testRoute from "./routes/testRoute.js";
-import userRoutes from "./routes/userRoutes.js"
+import userRoutes from "./routes/userRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 
 dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors(process.env.FRONTEND_URL));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+  })
+);
 app.use(express.json());
 
 // Routes
 app.use("/api/test", testRoute);
-app.use("/api/users",userRoutes);
-app.use("/api/notes",noteRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/notes", noteRoutes);
 
 // DB connection
 connectDB();
