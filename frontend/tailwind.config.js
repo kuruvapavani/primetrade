@@ -5,7 +5,7 @@ module.exports = {
     extend: {
       colors: {
         bg: "#F1F1F6",
-        headingMain: "#BE9FE1",
+        hero: "#BE9FE1",
         headingSub: "#C9B6E4",
         accent: "#E1CCEC",
       },
