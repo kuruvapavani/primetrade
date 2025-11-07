@@ -1,25 +1,45 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import axios from "axios";
 
-const Login = () => {
+const Login = ({setUser}) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      return;
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    if (token && user) {
+      setUser(JSON.parse(user));
+      navigate("/dashboard");
     }
+  }, [navigate, setUser]);
 
-    localStorage.setItem("token", "dummy-token");
-    navigate("/dashboard");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/api/users/login`,
+        { email, password }
+      );
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify({ id: data.id, name: data.name, email: data.email }));
+
+      setUser({ id: data.id, name: data.name, email: data.email });
+      navigate("/dashboard");
+    } catch (err) {
+      setError(
+        err.response?.data?.error || "Something went wrong. Please try again."
+      );
+    }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg font-poppins">

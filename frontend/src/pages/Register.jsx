@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import axios from "axios";
 
-const Register = () => {
+const Register = ({setUser}) => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,15 +11,30 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleRegister = (e) => {
-    e.preventDefault();
-
-    if (!name || !email || !password) {
-      setError("Please fill in all fields");
-      return;
+  useEffect(() => {
+    const loggedUser = JSON.parse(localStorage.getItem("user"));
+    if (loggedUser) {
+      navigate("/dashboard");
     }
-    localStorage.setItem("token", "dummy-token");
-    navigate("/dashboard");
+  }, [navigate]);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/api/users/register`,
+        { name, email, password }
+      );
+      localStorage.setItem("token",data.token)
+      localStorage.setItem("user", JSON.stringify(data));
+      setUser(data);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.error || "Registration failed. Please try again."
+      );
+    }
   };
 
   return (
