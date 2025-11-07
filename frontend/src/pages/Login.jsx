@@ -1,9 +1,10 @@
-import React, { useState ,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import axios from "axios";
+import { toast } from "sonner";
 
-const Login = ({setUser}) => {
+const Login = ({ setUser }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,13 +16,13 @@ const Login = ({setUser}) => {
     const user = localStorage.getItem("user");
     if (token && user) {
       setUser(JSON.parse(user));
+      toast.success("Already logged in!");
       navigate("/dashboard");
     }
   }, [navigate, setUser]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
     try {
       const { data } = await axios.post(
         `${process.env.REACT_APP_BASE_URL}/api/users/login`,
@@ -29,17 +30,20 @@ const Login = ({setUser}) => {
       );
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify({ id: data.id, name: data.name, email: data.email }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ id: data.id, name: data.name, email: data.email })
+      );
 
       setUser({ id: data.id, name: data.name, email: data.email });
+      toast.success("Logged in successfully!");
       navigate("/dashboard");
     } catch (err) {
-      setError(
+      toast.error(
         err.response?.data?.error || "Something went wrong. Please try again."
       );
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg font-poppins">

@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-const Navbar = ({ user ,setUser }) => {
+const Navbar = ({ user, setUser }) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -11,6 +12,7 @@ const Navbar = ({ user ,setUser }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    toast.success("Logged out successfully!");
     navigate("/login");
   };
 

@@ -1,9 +1,10 @@
-import React, { useState , useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import axios from "axios";
+import { toast } from "sonner";
 
-const Register = ({setUser}) => {
+const Register = ({ setUser }) => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const Register = ({setUser}) => {
   useEffect(() => {
     const loggedUser = JSON.parse(localStorage.getItem("user"));
     if (loggedUser) {
+      toast.success("Already logged in!");
       navigate("/dashboard");
     }
   }, [navigate]);
@@ -25,13 +27,16 @@ const Register = ({setUser}) => {
         `${process.env.REACT_APP_BASE_URL}/api/users/register`,
         { name, email, password }
       );
-      localStorage.setItem("token",data.token)
+
+      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
+
+      toast.success("Registered successfully!");
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError(
+      toast.error(
         err.response?.data?.error || "Registration failed. Please try again."
       );
     }
@@ -90,10 +95,7 @@ const Register = ({setUser}) => {
 
         <p className="mt-4 text-bg text-center">
           Already have an account?{" "}
-          <Link
-            to="/login"
-            className="text-bg font-semibold hover:underline"
-          >
+          <Link to="/login" className="text-bg font-semibold hover:underline">
             Login
           </Link>
         </p>

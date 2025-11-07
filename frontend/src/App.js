@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Error from "./pages/Error";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { Toaster } from "sonner";
 
 function App() {
     const [user, setUser] = useState(null);
@@ -18,6 +19,7 @@ function App() {
   return (
     <Router>
       <Layout user={user} setUser={setUser}>
+      <Toaster position="bottom-right"/>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
