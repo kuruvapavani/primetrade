@@ -19,7 +19,7 @@ const Navbar = ({ user }) => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="text-bg font-bold text-2xl tracking-wide">
-              Nexora
+              NoteWise
             </Link>
           </div>
 
