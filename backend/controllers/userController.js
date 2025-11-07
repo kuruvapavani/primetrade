@@ -85,24 +85,24 @@ export const updateUserProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const { name, email, password } = req.body;
+    const { name, oldPassword, newPassword } = req.body;
 
     if (name) user.name = name;
-    if (email) {
-      const emailExists = await User.findOne({ email });
-      if (emailExists && emailExists._id.toString() !== req.user.id) {
-        return res.status(400).json({ message: "Email already in use" });
+    if (oldPassword && newPassword) {
+      const isMatch = await user.matchPassword(oldPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Old password is incorrect" });
       }
-      user.email = email;
-    }
-    if (password) {
-      if (!isStrongPassword(password)) {
+
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
+      if (!regex.test(newPassword)) {
         return res.status(400).json({
           message:
             "Password must be at least 6 characters, contain 1 uppercase, 1 lowercase, and 1 number.",
         });
       }
-      user.password = password;
+
+      user.password = newPassword;
     }
 
     const updatedUser = await user.save();

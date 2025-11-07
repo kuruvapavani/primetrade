@@ -1,34 +1,189 @@
-import React, { useState } from "react";
+// src/pages/Dashboard.jsx
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import NoteCard from "../components/NoteCard";
 
-const Dashboard = () => {
-  const [notes, setNotes] = useState([
-    { _id: "1", title: "First Note", description: "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of  The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum,comes from a line in section 1.10.32" },
-    { _id: "2", title: "Second Note", description: "This is the second note" },
-    { _id: "3", title: "Shopping List", description: "Buy milk, bread, eggs" },
-  ]);
+import AddNoteModal from "../components/modals/AddNoteModal";
+import EditNoteModal from "../components/modals/EditNoteModal";
+import DeleteNoteModal from "../components/modals/DeleteNoteModal";
+import ProfileModal from "../components/modals/ProfileModal";
 
-  const handleEdit = (note) => {
-    alert(`Edit note: ${note.title}`);
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
+
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newNote, setNewNote] = useState({ title: "", description: "" });
+
+  const [editNote, setEditNote] = useState(null);
+  const [deleteNoteId, setDeleteNoteId] = useState(null);
+
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profile, setProfile] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    changePassword: false,
+    showOldPassword: false,
+    showNewPassword: false,
+  });
+
+  useEffect(() => {
+    if (!user || !token) navigate("/login");
+  }, [user, token, navigate]);
+
+  const fetchNotes = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_BASE_URL}/api/notes`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNotes(data);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    const confirmed = window.confirm("Are you sure you want to delete this note?");
-    if (confirmed) {
-      setNotes(notes.filter((note) => note._id !== id));
+  useEffect(() => {
+    if (user) fetchNotes();
+  }, []);
+
+  const handleAddNote = async () => {
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/api/notes`,
+        newNote,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNotes([data, ...notes]);
+      setShowAddModal(false);
+      setNewNote({ title: "", description: "" });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUpdateNote = async () => {
+    try {
+      const { data } = await axios.put(
+        `${process.env.REACT_APP_BASE_URL}/api/notes/${editNote._id}`,
+        editNote,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNotes(notes.map((n) => (n._id === data._id ? data : n)));
+      setEditNote(null);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    try {
+      await axios.delete(`${process.env.REACT_APP_BASE_URL}/api/notes/${deleteNoteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotes(notes.filter((note) => note._id !== deleteNoteId));
+      setDeleteNoteId(null);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      const updateData = { name: profile.name };
+      if (profile.changePassword) {
+        updateData.oldPassword = profile.oldPassword;
+        updateData.newPassword = profile.newPassword;
+      }
+      const { data } = await axios.put(
+        `${process.env.REACT_APP_BASE_URL}/api/users/profile`,
+        updateData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      localStorage.setItem("user", JSON.stringify(data));
+      setShowProfileModal(false);
+      window.location.reload();
+    } catch (error) {
+      if (error.response?.data?.message) alert(error.response.data.message);
+      else console.error(error);
     }
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {notes.map((note) => (
-        <NoteCard
-          key={note._id}
-          note={note}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      ))}
+    <div className="px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
+        <h1 className="text-2xl font-bold text-hero text-center sm:text-left">
+          Welcome back, {user?.name}
+        </h1>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-hero text-bg px-4 py-2 rounded hover:bg-headingSub transition-all duration-300 transform hover:scale-105"
+          >
+            Add Note
+          </button>
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="bg-hero text-bg px-4 py-2 rounded hover:bg-headingSub transition-all duration-300 transform hover:scale-105"
+          >
+            Update Profile
+          </button>
+        </div>
+      </div>
+
+      {/* Notes Grid */}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-hero"></div>
+        </div>
+      ) : notes.length === 0 ? (
+        <p className="text-center text-hero text-lg mt-8">No notes. Create one now!</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {notes.map((note) => (
+            <NoteCard
+              key={note._id}
+              note={note}
+              onEdit={setEditNote}
+              onDelete={() => setDeleteNoteId(note._id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modals */}
+      <AddNoteModal
+        show={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        newNote={newNote}
+        setNewNote={setNewNote}
+        handleAddNote={handleAddNote}
+      />
+      <EditNoteModal
+        editNote={editNote}
+        setEditNote={setEditNote}
+        handleUpdateNote={handleUpdateNote}
+      />
+      <DeleteNoteModal
+        deleteNoteId={deleteNoteId}
+        setDeleteNoteId={setDeleteNoteId}
+        handleDeleteNote={handleDeleteNote}
+      />
+      <ProfileModal
+        show={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        profile={profile}
+        setProfile={setProfile}
+        handleUpdateProfile={handleUpdateProfile}
+      />
     </div>
   );
 };
